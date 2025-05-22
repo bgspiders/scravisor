@@ -10,7 +10,7 @@
 """
 
 import redis
-from config import DATABASE_CONFIG
+from dev import DATABASE_CONFIG
 redis_server = redis.StrictRedis(
     host=DATABASE_CONFIG['redis']['host'],
     port=DATABASE_CONFIG['redis']['port'],
