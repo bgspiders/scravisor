@@ -8,8 +8,8 @@
    date      :   2025/5/22
 -------------------------------------------------
 """
-
-from .content_replace import *
+from task.make_req import create_req_start
+from parse.content_replace import *
 from db.redis_db import redis_server
 class ConfigParser:
     def __init__(self):
@@ -151,8 +151,18 @@ class ConfigParser:
 
             result[name] = replaced_value
         return result
-    def run(self):
-        pass
+    def make_response(self,task_info):
+        content=task_info['body']
+        headers=task_info['headers']
+        status=task_info['status']
+        url=task_info['url']
+        charset=task_info['encoding']
+        response_plus=HtmlResponse(url=url,headers=headers,encoding=charset, body=content.encode('utf-8'),
+                     status=status)
+        return  response_plus
+    def run(self,task_info):
+        resp=self.make_response(task_info)
+        print(resp)
         # self.config = config
         # self.html_content = html_content
         # self.tree = etree.HTML(html_content)
@@ -170,6 +180,107 @@ def get_all_keys():
 if __name__ == '__main__':
     ####并发消费#######
     import threading
+    _json = {
+    "start_req": {
+        'url':'https://lssggzy.lishui.gov.cn/jsearchfront/interfaces/search.do?_cus_lq_bidsectionname=&_cus_pq_title=&begin=&end=&_cus_lq_dljg=&_cus_lq_jyjf=&_cus_eq_author=&sortType=2&websiteid=331101000003826&tpl=1621&p=$page_number+1$&pg=30&cateid=681&_cus_lq_regioncode=',
+        'headers':{"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36"},
+        'max_loop':50,
+        'loop_auto':0,
+    },
+    "rule_tree": {
+        "list": {
+        "value": "/",
+        "succeed":0,
+        "type": "xpath",
+        "rule": [
+            {
+                "name":"url",
+                "xpath": "//url",
+                "type": "xpath",
+                're':'',
+                'ab_strip':1,
+                'plain':1,
+                'remove_style':0,
+                "replaces": [
+                    {
+                        "searchFlag": 0,
+                        "replaceValue": "aaa",
+                        "replaceFlag": 1,
+                        "searchValue": "sss"
+                    }
+                ],
+            },
+            {
+                "name": "title",
+                "xpath": "//bidsectioncode",
+                "type": "xpath",
+                're': '',
+                'ab_strip': 1,
+                'plain': 1,
+                'remove_style': 0,
+                "replaces": [
+                    {
+                        "searchFlag": 0,
+                        "replaceValue": "aaa",
+                        "replaceFlag": 1,
+                        "searchValue": "sss"
+                    }
+                ],
+            },
+            {
+                "name": "publish_time",
+                "xpath": "//createdate",
+                "type": "xpath",
+                're': '',
+                'ab_strip': 1,
+                'plain': 1,
+                'remove_style': 0,
+                "replaces": [
+                    {
+                        "searchFlag": 0,
+                        "replaceValue": "aaa",
+                        "replaceFlag": 1,
+                        "searchValue": "sss"
+                    }
+                ],
+            }
+        ]
+    },
+        "detail": [
+            {
+                "name": "content",
+                "xpath": "//div[@class='article-conter']",
+                "type": "xpath",
+                're': '',
+                'ab_strip': 1,
+                'plain': 1,
+                'remove_style': 0,
+                "replaces": [
+                    {
+                        "searchFlag": 0,
+                        "replaceValue": "aaa",
+                        "replaceFlag": 1,
+                        "searchValue": "sss"
+                    }
+                ],
+            },
+        ]
+    }
+
+}
+    reqq=create_req_start(_json)[0]
+    print(reqq)
+    resp=requests_bg(reqq['url'],headers=reqq['headers'])
+    task_info={
+        "body": resp.text,
+        "headers": resp.headers,
+        "status": resp.status_code,
+        "url": reqq['url'],
+        "config":_json,
+        "encoding": apparent_encoding(resp),
+    }
+    crawl=ConfigParser()
+    crawl.run(task_info)
     # def worker():
     #     crawler = ConfigParser()
     #     crawler.run()
